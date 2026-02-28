@@ -625,30 +625,31 @@ function calculateWuXing({ year, month, day, time, cangGan }) {
 }
 
 /**
- * 计算大运（简化版）
- * 避免使用 getYun 方法，因为打包后可能丢失
+ * 计算大运
+ * 考虑性别差异：阳年男顺女逆，阴年男逆女顺；起运时间男女不同
  */
 function calculateDaYun(lunar, gender, yearGanZhi) {
   const yearGan = yearGanZhi.charAt(0);
-  const yearYinYang = TIAN_GAN.indexOf(yearGan) % 2 === 0; // true=阳
+  const yearYinYang = TIAN_GAN.indexOf(yearGan) % 2 === 0; // true=阳(甲丙戊庚壬)
   const isMale = gender === 'male';
 
   // 顺排或逆排
   // 阳年男、阴年女顺排；阴年男、阳年女逆排
   const isForward = (yearYinYang && isMale) || (!yearYinYang && !isMale);
 
-  // 简化大运计算，从月柱开始顺排或逆排
+  // 从月柱开始顺排或逆排
   const monthGanZhi = lunar.getMonthInGanZhi();
   const startGan = monthGanZhi.charAt(0);
   const startZhi = monthGanZhi.charAt(1);
   const startGanIndex = TIAN_GAN.indexOf(startGan);
   const startZhiIndex = DI_ZHI.indexOf(startZhi);
 
+  // 计算起运时间
+  // 根据性别和年阴阳确定计算方向
+  const startTime = calculateStartAge(lunar, isMale, yearYinYang);
+
   const daYunList = [];
-  const currentYear = new Date().getFullYear();
   const birthYear = lunar.getYear();
-  const startAge = 3; // 简化为3岁起运
-  const startYear = birthYear + startAge;
 
   for (let i = 0; i < 8; i++) {
     let ganIndex, zhiIndex;
@@ -662,17 +663,66 @@ function calculateDaYun(lunar, gender, yearGanZhi) {
     daYunList.push({
       index: i + 1,
       ganZhi: TIAN_GAN[ganIndex] + DI_ZHI[zhiIndex],
-      startAge: startAge + i * 10,
-      startYear: startYear + i * 10,
+      startAge: startTime.startAge + i * 10,
+      startYear: birthYear + startTime.startAge + i * 10,
     });
   }
 
   return {
     isForward,
-    startAge,
-    startYear,
-    startMonth: 0,
-    startDay: 0,
+    startAge: startTime.startAge,
+    startYear: birthYear + startTime.startAge,
+    startMonth: startTime.startMonth,
+    startDay: startTime.startDay,
     list: daYunList,
+  };
+}
+
+/**
+ * 计算起运年龄
+ * 阳男阴女：顺行，从出生日算到下一个节气
+ * 阴男阳女：逆行，从出生日算到上一个节气
+ */
+function calculateStartAge(lunar, isMale, yearYinYang) {
+  const solar = lunar.getSolar();
+  const birthDate = new Date(solar.getYear(), solar.getMonth() - 1, solar.getDay());
+
+  // 确定是顺行还是逆行
+  // 阳男阴女顺行（向下一个节气），阴男阳女逆行（向上一个节气）
+  const isForward = (yearYinYang && isMale) || (!yearYinYang && !isMale);
+
+  let targetJieQi;
+  let daysDiff;
+
+  if (isForward) {
+    // 顺行：找下一个节气
+    targetJieQi = lunar.getNextJieQi();
+    if (!targetJieQi) {
+      // 如果获取失败，使用默认3岁
+      return { startAge: 3, startMonth: 0, startDay: 0 };
+    }
+    const jieQiSolar = targetJieQi.getSolar();
+    const jieQiDate = new Date(jieQiSolar.getYear(), jieQiSolar.getMonth() - 1, jieQiSolar.getDay());
+    daysDiff = Math.ceil((jieQiDate - birthDate) / (1000 * 60 * 60 * 24));
+  } else {
+    // 逆行：找上一个节气
+    targetJieQi = lunar.getPrevJieQi();
+    if (!targetJieQi) {
+      return { startAge: 3, startMonth: 0, startDay: 0 };
+    }
+    const jieQiSolar = targetJieQi.getSolar();
+    const jieQiDate = new Date(jieQiSolar.getYear(), jieQiSolar.getMonth() - 1, jieQiSolar.getDay());
+    daysDiff = Math.ceil((birthDate - jieQiDate) / (1000 * 60 * 60 * 24));
+  }
+
+  // 三天折合一岁，一天折合四个月，一个时辰（2小时）折合十天
+  const years = Math.floor(daysDiff / 3);
+  const remainingDays = daysDiff % 3;
+  const months = remainingDays * 4;
+
+  return {
+    startAge: years,
+    startMonth: months,
+    startDay: 0,
   };
 }
