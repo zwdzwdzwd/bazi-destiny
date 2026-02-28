@@ -265,13 +265,22 @@ export async function streamChatCompletion(provider, apiKey, messages, onChunk, 
             const reasoningContent = delta.reasoning_content || '';
             if (reasoningContent) {
               fullReasoning += reasoningContent;
+              // 实时更新思维链+内容的完整显示
+              const displayContent = fullReasoning
+                ? `【思维过程】\n${fullReasoning}\n\n【最终解读】\n${fullContent}`
+                : fullContent;
+              onChunk?.(reasoningContent, displayContent);
             }
 
             // 提取最终内容
             const content = delta.content || '';
             if (content) {
               fullContent += content;
-              onChunk?.(content, fullContent);
+              // 如果有思维链，显示组合内容
+              const displayContent = fullReasoning
+                ? `【思维过程】\n${fullReasoning}\n\n【最终解读】\n${fullContent}`
+                : fullContent;
+              onChunk?.(content, displayContent);
             }
           } catch (err) {
             // JSON不完整，跳过
