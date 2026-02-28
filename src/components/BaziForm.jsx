@@ -284,6 +284,10 @@ export function BaziForm({ onSubmit, loading }) {
           text-align: center;
         }
 
+        .date-inputs input[name="year"] {
+          width: 80px;
+        }
+
         .date-inputs span,
         .time-inputs span {
           color: #999;
