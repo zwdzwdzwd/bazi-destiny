@@ -27,9 +27,9 @@ const API_PROVIDERS = {
     supportsStream: false, // 简化实现，先不支持流式
   },
   kimi: {
-    name: 'Kimi K2.5',
+    name: 'Kimi (月之暗面)',
     url: 'https://api.moonshot.cn/v1/chat/completions',
-    model: 'kimi-k2.5',
+    model: 'moonshot-v1-32k',
     authType: 'bearer',
     supportsStream: true,
   },
