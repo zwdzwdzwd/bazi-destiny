@@ -38,6 +38,12 @@ export function AIAnalysis({ baziData }) {
           link: 'https://aistudio.google.com/app/apikey',
           placeholder: '输入Gemini API Key',
         };
+      case 'kimi':
+        return {
+          name: 'Kimi',
+          link: 'https://platform.moonshot.cn/',
+          placeholder: '输入Kimi API Key (sk-...)',
+        };
       default:
         return { name: 'AI', link: '#', placeholder: '输入API Key' };
     }

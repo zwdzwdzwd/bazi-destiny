@@ -1,6 +1,6 @@
 /**
  * 统一AI API接口
- * 支持DeepSeek、OpenAI(ChatGPT)、Google Gemini
+ * 支持DeepSeek、OpenAI(ChatGPT)、Google Gemini、Kimi
  */
 
 // API提供商配置
@@ -25,6 +25,13 @@ const API_PROVIDERS = {
     model: 'gemini-1.5-flash-latest',
     authType: 'query',
     supportsStream: false, // 简化实现，先不支持流式
+  },
+  kimi: {
+    name: 'Kimi (月之暗面)',
+    url: 'https://api.moonshot.cn/v1/chat/completions',
+    model: 'moonshot-v1-8k',
+    authType: 'bearer',
+    supportsStream: true,
   },
 };
 
