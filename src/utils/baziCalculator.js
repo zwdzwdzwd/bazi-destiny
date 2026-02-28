@@ -384,41 +384,53 @@ function extractCangGan(pillars) {
 
 /**
  * 计算神煞（核心神煞）
+ * 修复：检查四柱地支中是否实际存在对应神煞
  */
 function calculateShenSha(lunar, gender) {
   const yearGan = lunar.getYearGan();
   const yearZhi = lunar.getYearZhi();
   const dayGan = lunar.getDayGan();
   const dayZhi = lunar.getDayZhi();
+  const monthZhi = lunar.getMonthZhi();
+  const timeZhi = lunar.getTimeZhi();
+
+  // 四柱所有地支
+  const allZhiList = [yearZhi, monthZhi, dayZhi, timeZhi];
+  const zhiPositions = {
+    [yearZhi]: '年支',
+    [monthZhi]: '月支',
+    [dayZhi]: '日支',
+    [timeZhi]: '时支'
+  };
 
   const shenSha = [];
 
-  // 天乙贵人
-  const tianYiGuiRen = getTianYiGuiRen(dayGan, dayZhi);
+  // 天乙贵人 - 检查四柱中是否有贵人地支
+  const tianYiGuiRen = getTianYiGuiRen(dayGan, allZhiList, zhiPositions);
   if (tianYiGuiRen.length > 0) {
     shenSha.push({ name: '天乙贵人', positions: tianYiGuiRen, description: '逢凶化吉，贵人相助' });
   }
 
-  // 文昌贵人
-  const wenChang = getWenChang(dayGan);
-  if (wenChang) {
-    shenSha.push({ name: '文昌贵人', position: wenChang, description: '聪明好学，文章振发' });
+  // 文昌贵人 - 检查四柱中是否有文昌地支
+  const wenChang = getWenChang(dayGan, allZhiList, zhiPositions);
+  if (wenChang.length > 0) {
+    shenSha.push({ name: '文昌贵人', positions: wenChang, description: '聪明好学，文章振发' });
   }
 
-  // 桃花
-  const taoHua = getTaoHua(yearZhi, dayZhi);
+  // 桃花 - 检查四柱中是否有桃花地支
+  const taoHua = getTaoHua(yearZhi, dayZhi, allZhiList, zhiPositions);
   if (taoHua.length > 0) {
     shenSha.push({ name: '桃花', positions: taoHua, description: '人缘好，感情丰富' });
   }
 
-  // 驿马
-  const yiMa = getYiMa(yearZhi, dayZhi);
+  // 驿马 - 检查四柱中是否有驿马地支
+  const yiMa = getYiMa(yearZhi, dayZhi, allZhiList, zhiPositions);
   if (yiMa.length > 0) {
     shenSha.push({ name: '驿马', positions: yiMa, description: '奔波变动，适合远行' });
   }
 
-  // 华盖
-  const huaGai = getHuaGai(yearZhi, dayZhi);
+  // 华盖 - 检查四柱中是否有华盖地支
+  const huaGai = getHuaGai(yearZhi, dayZhi, allZhiList, zhiPositions);
   if (huaGai.length > 0) {
     shenSha.push({ name: '华盖', positions: huaGai, description: '孤独之星，喜玄学艺术' });
   }
@@ -429,8 +441,9 @@ function calculateShenSha(lunar, gender) {
 /**
  * 天乙贵人查法
  * 甲戊庚牛羊，乙己鼠猴乡，丙丁猪鸡位，壬癸蛇兔藏，六辛逢马虎
+ * 修复：检查四柱地支中是否实际存在贵人地支
  */
-function getTianYiGuiRen(dayGan, dayZhi) {
+function getTianYiGuiRen(dayGan, allZhiList, zhiPositions) {
   const rules = {
     '甲': ['丑', '未'], '戊': ['丑', '未'], '庚': ['丑', '未'],
     '乙': ['子', '申'], '己': ['子', '申'],
@@ -442,12 +455,10 @@ function getTianYiGuiRen(dayGan, dayZhi) {
   const result = [];
   const guiRenZhi = rules[dayGan] || [];
 
-  // 检查四柱地支
-  const zhiList = [dayZhi]; // 简化，只检查日支
-
-  for (const zhi of zhiList) {
+  // 检查四柱地支中是否有贵人地支
+  for (const zhi of allZhiList) {
     if (guiRenZhi.includes(zhi)) {
-      result.push(zhi);
+      result.push({ position: zhiPositions[zhi], zhi });
     }
   }
 
@@ -457,8 +468,9 @@ function getTianYiGuiRen(dayGan, dayZhi) {
 /**
  * 文昌贵人查法
  * 甲乙巳午，丙戊申猴，丁己鸡，庚猪辛鼠壬逢虎，癸人见卯
+ * 修复：检查四柱地支中是否实际存在文昌地支
  */
-function getWenChang(dayGan) {
+function getWenChang(dayGan, allZhiList, zhiPositions) {
   const rules = {
     '甲': '巳', '乙': '午',
     '丙': '申', '戊': '申',
@@ -466,14 +478,25 @@ function getWenChang(dayGan) {
     '庚': '亥', '辛': '子', '壬': '寅', '癸': '卯',
   };
 
-  return rules[dayGan];
+  const result = [];
+  const wenChangZhi = rules[dayGan];
+
+  // 检查四柱地支中是否有文昌地支
+  for (const zhi of allZhiList) {
+    if (zhi === wenChangZhi) {
+      result.push({ position: zhiPositions[zhi], zhi });
+    }
+  }
+
+  return result;
 }
 
 /**
  * 桃花查法
  * 申子辰在酉，巳酉丑在午，寅午戌在卯，亥卯未在子
+ * 修复：检查四柱地支中是否实际存在桃花地支
  */
-function getTaoHua(yearZhi, dayZhi) {
+function getTaoHua(yearZhi, dayZhi, allZhiList, zhiPositions) {
   const rules = {
     '申': '酉', '子': '酉', '辰': '酉',
     '巳': '午', '酉': '午', '丑': '午',
@@ -482,8 +505,22 @@ function getTaoHua(yearZhi, dayZhi) {
   };
 
   const result = [];
-  if (rules[yearZhi]) result.push({ type: '年支', zhi: rules[yearZhi] });
-  if (rules[dayZhi]) result.push({ type: '日支', zhi: rules[dayZhi] });
+
+  // 年支桃花：检查四柱中是否有年支对应的桃花地支
+  const yearTaoHua = rules[yearZhi];
+  for (const zhi of allZhiList) {
+    if (zhi === yearTaoHua) {
+      result.push({ source: '年支', position: zhiPositions[zhi], zhi });
+    }
+  }
+
+  // 日支桃花：检查四柱中是否有日支对应的桃花地支
+  const dayTaoHua = rules[dayZhi];
+  for (const zhi of allZhiList) {
+    if (zhi === dayTaoHua && !result.find(r => r.zhi === zhi)) {
+      result.push({ source: '日支', position: zhiPositions[zhi], zhi });
+    }
+  }
 
   return result;
 }
@@ -491,8 +528,9 @@ function getTaoHua(yearZhi, dayZhi) {
 /**
  * 驿马查法
  * 申子辰马在寅，巳酉丑马在亥，寅午戌马在申，亥卯未马在巳
+ * 修复：检查四柱地支中是否实际存在驿马地支
  */
-function getYiMa(yearZhi, dayZhi) {
+function getYiMa(yearZhi, dayZhi, allZhiList, zhiPositions) {
   const rules = {
     '申': '寅', '子': '寅', '辰': '寅',
     '巳': '亥', '酉': '亥', '丑': '亥',
@@ -501,8 +539,22 @@ function getYiMa(yearZhi, dayZhi) {
   };
 
   const result = [];
-  if (rules[yearZhi]) result.push({ type: '年支', zhi: rules[yearZhi] });
-  if (rules[dayZhi]) result.push({ type: '日支', zhi: rules[dayZhi] });
+
+  // 年支驿马：检查四柱中是否有年支对应的驿马地支
+  const yearYiMa = rules[yearZhi];
+  for (const zhi of allZhiList) {
+    if (zhi === yearYiMa) {
+      result.push({ source: '年支', position: zhiPositions[zhi], zhi });
+    }
+  }
+
+  // 日支驿马：检查四柱中是否有日支对应的驿马地支
+  const dayYiMa = rules[dayZhi];
+  for (const zhi of allZhiList) {
+    if (zhi === dayYiMa && !result.find(r => r.zhi === zhi)) {
+      result.push({ source: '日支', position: zhiPositions[zhi], zhi });
+    }
+  }
 
   return result;
 }
@@ -510,8 +562,9 @@ function getYiMa(yearZhi, dayZhi) {
 /**
  * 华盖查法
  * 申子辰见辰，巳酉丑见丑，寅午戌见戌，亥卯未见未
+ * 修复：检查四柱地支中是否实际存在华盖地支
  */
-function getHuaGai(yearZhi, dayZhi) {
+function getHuaGai(yearZhi, dayZhi, allZhiList, zhiPositions) {
   const rules = {
     '申': '辰', '子': '辰', '辰': '辰',
     '巳': '丑', '酉': '丑', '丑': '丑',
@@ -520,8 +573,22 @@ function getHuaGai(yearZhi, dayZhi) {
   };
 
   const result = [];
-  if (rules[yearZhi]) result.push({ type: '年支', zhi: rules[yearZhi] });
-  if (rules[dayZhi]) result.push({ type: '日支', zhi: rules[dayZhi] });
+
+  // 年支华盖：检查四柱中是否有年支对应的华盖地支
+  const yearHuaGai = rules[yearZhi];
+  for (const zhi of allZhiList) {
+    if (zhi === yearHuaGai) {
+      result.push({ source: '年支', position: zhiPositions[zhi], zhi });
+    }
+  }
+
+  // 日支华盖：检查四柱中是否有日支对应的华盖地支
+  const dayHuaGai = rules[dayZhi];
+  for (const zhi of allZhiList) {
+    if (zhi === dayHuaGai && !result.find(r => r.zhi === zhi)) {
+      result.push({ source: '日支', position: zhiPositions[zhi], zhi });
+    }
+  }
 
   return result;
 }
