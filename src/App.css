@@ -1,0 +1,98 @@
+/* 全局样式 */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #f5f0e8;
+  color: #333;
+}
+
+#root {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* 应用容器 */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 头部 */
+.app-header {
+  text-align: center;
+  padding: 30px 0;
+  border-bottom: 2px solid #d4c8b0;
+  margin-bottom: 20px;
+}
+
+.app-header h1 {
+  color: #8b4513;
+  font-size: 2.2rem;
+  margin: 0 0 10px 0;
+  font-weight: 600;
+}
+
+.subtitle {
+  color: #a08060;
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* 主内容区 */
+.app-main {
+  flex: 1;
+}
+
+/* 错误提示 */
+.error-message {
+  background: #fee;
+  color: #c33;
+  padding: 16px;
+  border-radius: 8px;
+  margin: 20px 0;
+  text-align: center;
+  border: 1px solid #fcc;
+}
+
+/* 底部 */
+.app-footer {
+  text-align: center;
+  padding: 30px 0;
+  margin-top: 40px;
+  border-top: 1px solid #d4c8b0;
+  color: #666;
+}
+
+.app-footer p {
+  margin: 0 0 8px 0;
+}
+
+.app-footer .disclaimer {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  #root {
+    padding: 10px;
+  }
+
+  .app-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+  }
+}
