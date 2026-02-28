@@ -203,20 +203,26 @@ export async function streamChatCompletion(provider, apiKey, messages, onChunk, 
       return;
     }
 
-    // DeepSeek和OpenAI使用标准OpenAI格式
+    // 构建请求体
+    const requestBody = {
+      model: config.model,
+      messages,
+      stream: true,
+      max_tokens: 4000,
+    };
+
+    // K2.5不支持temperature参数，其他模型支持
+    if (provider !== 'kimi') {
+      requestBody.temperature = 0.7;
+    }
+
     const response = await fetch(config.url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model: config.model,
-        messages,
-        stream: true,
-        temperature: 0.7,
-        max_tokens: 4000,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
