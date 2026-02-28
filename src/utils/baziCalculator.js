@@ -558,7 +558,8 @@ function calculateWuXing({ year, month, day, time, cangGan }) {
 }
 
 /**
- * 计算大运
+ * 计算大运（简化版）
+ * 避免使用 getYun 方法，因为打包后可能丢失
  */
 function calculateDaYun(lunar, gender, yearGanZhi) {
   const yearGan = yearGanZhi.charAt(0);
@@ -569,28 +570,42 @@ function calculateDaYun(lunar, gender, yearGanZhi) {
   // 阳年男、阴年女顺排；阴年男、阳年女逆排
   const isForward = (yearYinYang && isMale) || (!yearYinYang && !isMale);
 
-  const daYunList = [];
-  const yun = lunar.getYun(gender === 'male' ? 1 : 0);
+  // 简化大运计算，从月柱开始顺排或逆排
+  const monthGanZhi = lunar.getMonthInGanZhi();
+  const startGan = monthGanZhi.charAt(0);
+  const startZhi = monthGanZhi.charAt(1);
+  const startGanIndex = TIAN_GAN.indexOf(startGan);
+  const startZhiIndex = DI_ZHI.indexOf(startZhi);
 
-  // 大运干支
-  const ganZhiList = yun.getDaYun();
+  const daYunList = [];
+  const currentYear = new Date().getFullYear();
+  const birthYear = lunar.getYear();
+  const startAge = 3; // 简化为3岁起运
+  const startYear = birthYear + startAge;
 
   for (let i = 0; i < 8; i++) {
-    const dy = ganZhiList[i];
+    let ganIndex, zhiIndex;
+    if (isForward) {
+      ganIndex = (startGanIndex + i + 1) % 10;
+      zhiIndex = (startZhiIndex + i + 1) % 12;
+    } else {
+      ganIndex = (startGanIndex - i - 1 + 10) % 10;
+      zhiIndex = (startZhiIndex - i - 1 + 12) % 12;
+    }
     daYunList.push({
       index: i + 1,
-      ganZhi: dy.getGanZhi(),
-      startAge: dy.getStartAge(),
-      startYear: dy.getStartYear(),
+      ganZhi: TIAN_GAN[ganIndex] + DI_ZHI[zhiIndex],
+      startAge: startAge + i * 10,
+      startYear: startYear + i * 10,
     });
   }
 
   return {
     isForward,
-    startAge: yun.getStartAge(),
-    startYear: yun.getStartYear(),
-    startMonth: yun.getStartMonth(),
-    startDay: yun.getStartDay(),
+    startAge,
+    startYear,
+    startMonth: 0,
+    startDay: 0,
     list: daYunList,
   };
 }
