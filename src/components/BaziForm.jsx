@@ -241,8 +241,20 @@ export function BaziForm({ onSubmit, loading }) {
 
         .form-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          grid-template-columns: 1fr;
           gap: 16px;
+        }
+
+        @media (min-width: 640px) {
+          .form-grid {
+            grid-template-columns: 1.2fr 0.8fr;
+          }
+        }
+
+        @media (min-width: 900px) {
+          .form-grid {
+            grid-template-columns: 1.5fr 1fr 1fr 0.8fr;
+          }
         }
 
         .form-group {
@@ -275,22 +287,31 @@ export function BaziForm({ onSubmit, loading }) {
         .time-inputs {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 6px;
+          flex-wrap: nowrap;
         }
 
-        .date-inputs input,
-        .time-inputs input {
-          width: 60px;
+        .date-inputs input {
+          width: 70px;
           text-align: center;
+          padding: 10px 8px;
         }
 
         .date-inputs input[name="year"] {
-          width: 80px;
+          width: 85px;
+        }
+
+        .time-inputs input {
+          width: 60px;
+          text-align: center;
+          padding: 10px 8px;
         }
 
         .date-inputs span,
         .time-inputs span {
           color: #999;
+          font-size: 0.9rem;
+          white-space: nowrap;
         }
 
         .radio-group {
