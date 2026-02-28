@@ -82,6 +82,7 @@ export function AIAnalysis({ baziData }) {
         setContent(full);
       },
       (full) => {
+        setContent(full); // 确保最终内容被设置
         setLoading(false);
       },
       (err) => {
