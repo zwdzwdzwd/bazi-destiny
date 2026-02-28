@@ -234,6 +234,7 @@ export async function streamChatCompletion(provider, apiKey, messages, onChunk, 
     const decoder = new TextDecoder();
     let buffer = '';
     let fullContent = '';
+    let fullReasoning = '';
 
     while (true) {
       const { value, done } = await reader.read();
@@ -248,14 +249,26 @@ export async function streamChatCompletion(provider, apiKey, messages, onChunk, 
           const data = line.slice(6).trim();
 
           if (data === '[DONE]') {
-            onDone?.(fullContent);
+            // 如果有思维链，在最终结果前添加
+            const finalResult = fullReasoning
+              ? `【思维过程】\n${fullReasoning}\n\n【最终解读】\n${fullContent}`
+              : fullContent;
+            onDone?.(finalResult);
             return;
           }
 
           try {
             const parsed = JSON.parse(data);
-            const content = parsed.choices[0]?.delta?.content || '';
+            const delta = parsed.choices[0]?.delta || {};
 
+            // 提取思维链（DeepSeek R1）
+            const reasoningContent = delta.reasoning_content || '';
+            if (reasoningContent) {
+              fullReasoning += reasoningContent;
+            }
+
+            // 提取最终内容
+            const content = delta.content || '';
             if (content) {
               fullContent += content;
               onChunk?.(content, fullContent);
@@ -267,7 +280,11 @@ export async function streamChatCompletion(provider, apiKey, messages, onChunk, 
       }
     }
 
-    onDone?.(fullContent);
+    // 流式结束，返回完整结果
+    const finalResult = fullReasoning
+      ? `【思维过程】\n${fullReasoning}\n\n【最终解读】\n${fullContent}`
+      : fullContent;
+    onDone?.(finalResult);
   } catch (error) {
     onError?.(error);
   }
