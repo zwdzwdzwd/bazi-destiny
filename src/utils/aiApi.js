@@ -208,7 +208,7 @@ export async function streamChatCompletion(provider, apiKey, messages, onChunk, 
       model: config.model,
       messages,
       stream: true,
-      max_tokens: 4000,
+      max_tokens: 8192, // 提高到 DeepSeek 所支持的最大输出，避免长篇命书被截断
     };
 
     // K2.5不支持temperature参数，其他模型支持
@@ -235,6 +235,17 @@ export async function streamChatCompletion(provider, apiKey, messages, onChunk, 
     let buffer = '';
     let fullContent = '';
     let fullReasoning = '';
+    let finishedReason = '';
+
+    // 组装最终显示结果（含思维链），若命中 finish_reason === 'length' 则附加截断提示
+    const buildResult = () => {
+      const base = fullReasoning
+        ? `【思维过程】\n${fullReasoning}\n\n【最终解读】\n${fullContent}`
+        : fullContent;
+      return finishedReason === 'length'
+        ? base + '\n\n（⚠️ 解读因输出长度上限被截断，建议精简提示词或改用 deepseek-chat）'
+        : base;
+    };
 
     while (true) {
       const { value, done } = await reader.read();
@@ -249,27 +260,26 @@ export async function streamChatCompletion(provider, apiKey, messages, onChunk, 
           const data = line.slice(6).trim();
 
           if (data === '[DONE]') {
-            // 如果有思维链，在最终结果前添加
-            const finalResult = fullReasoning
-              ? `【思维过程】\n${fullReasoning}\n\n【最终解读】\n${fullContent}`
-              : fullContent;
-            onDone?.(finalResult);
+            onDone?.(buildResult());
             return;
           }
 
           try {
             const parsed = JSON.parse(data);
-            const delta = parsed.choices[0]?.delta || {};
+            const choice = parsed.choices?.[0] || {};
+            const delta = choice.delta || {};
+
+            // 记录流式结束原因（stop=正常, length=因长度上限被截断）
+            if (choice.finish_reason) {
+              finishedReason = choice.finish_reason;
+            }
 
             // 提取思维链（DeepSeek R1）
             const reasoningContent = delta.reasoning_content || '';
             if (reasoningContent) {
               fullReasoning += reasoningContent;
               // 实时更新思维链+内容的完整显示
-              const displayContent = fullReasoning
-                ? `【思维过程】\n${fullReasoning}\n\n【最终解读】\n${fullContent}`
-                : fullContent;
-              onChunk?.(reasoningContent, displayContent);
+              onChunk?.(reasoningContent, buildResult());
             }
 
             // 提取最终内容
@@ -277,10 +287,7 @@ export async function streamChatCompletion(provider, apiKey, messages, onChunk, 
             if (content) {
               fullContent += content;
               // 如果有思维链，显示组合内容
-              const displayContent = fullReasoning
-                ? `【思维过程】\n${fullReasoning}\n\n【最终解读】\n${fullContent}`
-                : fullContent;
-              onChunk?.(content, displayContent);
+              onChunk?.(content, buildResult());
             }
           } catch (err) {
             // JSON不完整，跳过
@@ -290,10 +297,7 @@ export async function streamChatCompletion(provider, apiKey, messages, onChunk, 
     }
 
     // 流式结束，返回完整结果
-    const finalResult = fullReasoning
-      ? `【思维过程】\n${fullReasoning}\n\n【最终解读】\n${fullContent}`
-      : fullContent;
-    onDone?.(finalResult);
+    onDone?.(buildResult());
   } catch (error) {
     onError?.(error);
   }
@@ -320,7 +324,7 @@ async function callGemini(apiKey, messages) {
     ],
     generationConfig: {
       temperature: 0.7,
-      maxOutputTokens: 4000,
+      maxOutputTokens: 8192,
     },
   };
 
