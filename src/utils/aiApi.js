@@ -6,9 +6,9 @@
 // API提供商配置
 const API_PROVIDERS = {
   deepseek: {
-    name: 'DeepSeek R1',
+    name: 'DeepSeek',
     url: 'https://api.deepseek.com/chat/completions',
-    model: 'deepseek-reasoner',
+    model: 'deepseek-chat',
     authType: 'bearer',
     supportsStream: true,
   },
@@ -243,7 +243,7 @@ export async function streamChatCompletion(provider, apiKey, messages, onChunk, 
         ? `【思维过程】\n${fullReasoning}\n\n【最终解读】\n${fullContent}`
         : fullContent;
       return finishedReason === 'length'
-        ? base + '\n\n（⚠️ 解读因输出长度上限被截断，建议精简提示词或改用 deepseek-chat）'
+        ? base + '\n\n（⚠️ 解读因输出长度上限被截断，建议精简提示词或分段提问）'
         : base;
     };
 
